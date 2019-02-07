@@ -1,0 +1,205 @@
+\section{FETI Methods}
+The FETI (Finite Element Tearing and Interconnecting) method was introduced by Farhat and Roux 
+in \cite{feti1}. It is the method used to solve linear problem described by elliptic PDEs in 
+parallel. It decomposes the spatial domain into non-overlapping sub-domains "glued" together 
+by Lagrange multipliers. The primal problem is then transferred, or rather reduced, into the 
+smaller and better conditioned constrained QP problem. This problem is then solved iteratively,
+typically using some form of Conjugate Gradient (CG) method.
+
+
+The FETI method was modified (described in \cite{feti1optimal}), when it was observed, that the mathematical 
+treatment of floating sub-domains together with the Projected Conjugate Gradients method 
+(described in \cite{vriha2016massively} in detail) is equivalent to the assembling and solution 
+of a coarse problem, which accelerates the convergence and guarantees, that the FETI algorithm 
+numerical  performance is independent on a number of sub-domains.
+
+For practical purposes a method for automatic identification of kernels of the
+subdomain stiffness matrices is required. These kernels are used during the elimination of the primal 
+variables and in definition of the coarse grid projectors. The algorithm for kernel detection was
+described by Farhat and Gérardin in \cite{feti1optimal2} as the combination of Cholesky 
+factorization and the singular value decomposition.
+
+The kernel detection problem partially persisted in real-world problems even with this 
+improvement, because of the rounding errors. This led to the improved version of FETI called 
+FETI-DP described in \cite{fetidp}. The difference is, that FETI-DP makes all the subdomain stiffness
+matrices invertible by enforcing the continuity of displacements at the corners 
+on primal level. This is advantageous for some applications, because FETI-DP is efficiently 
+preconditioned and so it converges better than FETI. The main drawback is, that the coarse grid
+defined by the corners is less efficient without additional preconditioning than the one defined
+by the rigid body motions, as described in \cite{fetidpDostal}. The FETI-DP algorithm is also 
+much more difficult to implement, because it requires a special treatment of corners. The algorithm, which addresses both of these drawbacks is called Total FETI (TFETI) and it is briefly introduced in the next section. % (described in detail in TODO).
+
+
+\subsection{Total FETI}
+After discretization and decomposition into sub-domains, the i-th
+sub-domain corresponds to the following system: 
+
+\begin{align}
+K_i u_i &= f_i - B_i^T \lambda, \qquad i \in \{ 1, \ldots, n \}\\
+B_i u_i &= c_i,
+\label{eq:tfetiLocalProblem}
+\end{align}
+where $K_i$ is the local stiffness matrix of the i-th sub-domain, 
+$f_i$ is the local right-hand side vector, $B_i$ is the constraint matrix and $n$ is the number of 
+sub-domains. Finally, $\lambda$ is a vector of Lagrange 
+multipliers, which enforces the continuity of neighboring 
+sub-domains.
+
+
+Moreover, the problem is accompanied by the compatibility 
+condition
+\begin{equation}
+B_1 u_1 + \cdots + B_n u_n = c,
+\end{equation}
+where $c \in \mathbb{R}$. $B_i$ matrices can be assembled into 
+a global matrix $B = \left[ B_1, \ldots, B_n \right]$, which enforces both the Dirichlet boundary conditions and the continuity of neighboring sub-domains.% in the decomposed  problem.
+
+One can also assemble the global stiffness matrix $K = diag\left( K_1, \ldots, K_n \right)$, the global right-hand side vector $f = \left[ f_1^T, \ldots, f_n^T \right]^T$ and the global unknown vector $u = \left[ u_1^T, \ldots, u_n^T \right]^T$,
+so the whole problem can be rewritten as 
+\begin{equation}
+\begin{bmatrix}
+K & B^T\\
+B & O
+\end{bmatrix}
+\begin{bmatrix}
+u\\
+\lambda
+\end{bmatrix}
+=
+\begin{bmatrix}
+f\\
+c
+\end{bmatrix}.
+\label{eq:tfetiGlobProb}
+\end{equation}
+By eliminating primary variable $u$ as 
+\begin{equation}
+u = K^\dagger \left( f - B^T \lambda \right) + R\alpha
+\label{eq:elimUVar}
+\end{equation}
+and by utilizing orthogonality condition 
+\begin{equation}
+R \perp f - B^T \lambda
+\label{eq:tfetiOrthogCond}
+\end{equation}
+we get a new system with a Schur complement
+\begin{equation}
+\begin{bmatrix}
+F & G \\
+G^T & O
+\end{bmatrix}
+\begin{bmatrix}
+\lambda\\
+\alpha
+\end{bmatrix}
+=
+\begin{bmatrix}
+d\\
+e
+\end{bmatrix},
+\label{eq:tfetiDualProblem}
+\end{equation}
+where 
+\begin{align}
+F &= BK^\dagger B^T\\
+G &= -BR\\
+d &= BK^\dagger f - c\\
+e &= -R^T f^T,\end{align}
+and $R = diag\left( R_1, \ldots, R_n \right)$ consisting of the vectors which create the a basis of the null space of the matrix $K$.
+The new system given by Eq. \eqref{eq:tfetiDualProblem} is smaller and better conditioned, than the original problem, so it can be solved more efficiently. To solve the system the Projected Preconditioned Conjugate Gradient (PPCG) method is used. This method is using the projector 
+\begin{equation}
+P = I - G\left( G^T G \right)^{-1} G^T,
+\end{equation}
+where $G = -BR$. Size of the so called \textit{coarse problem} $G^T G \in \mathbb{R}^{n_G \times n_G}$ depends on the number of sub-domains $n$, such as
+$n_G = n \cdot d$, where $d$ is the number of rigid body motions (3 in 2D, 6 in 3D for linear elasticity problem). The coarse problem could become a bottle-neck of TFETI algorithm when solving very large problems. This problem is addressed by HTFETI method.
+
+
+\subsection{Hybrid Total FETI }
+The key idea of HTFETI is the aggregation of a  
+number of neighboring sub-domains into so called 
+\textit{clusters} using Lagrange multipliers, which results 
+into a smaller coarse problem. Using Lagrange multipliers here means, that the TFETI method is used twice - both on cluster and sub-domain levels.
+
+
+So, the problem is decomposed into $n = n_c \cdot n_s$ sub-domains 
+in total, $n_c$ being the number of clusters and $n_s$ being the number of sub-domains per cluster.
+
+
+In HTFETI there is used slightly modified form of the problem described as
+\begin{mini}
+    {u}{\frac{1}{2}u^T K u - u^T f}{}{}
+    \addConstraint{B_0u = c_0}
+    \addConstraint{B_1u = c_1}
+    \label{eq:htfetiProblem}
+\end{mini}
+The first part $B_0 u = c_0$ of the equality constraints enforces
+the continuity in the sub-domain corner nodes of each cluster and the second part $B_1 u = c_1$ enforces the continuity among the rest of the sub-domain interfaces
+and the prescribed Dirichlet condition.
+
+
+The problem \eqref{eq:htfetiProblem} can be described with respect to the Karush-Kuhn-Tucker conditions as
+\begin{equation}
+\begin{bmatrix}[cc|c]
+K & B_0^T & B_0^T \\
+B_0 & O & O \\ \hline
+B_1 & O & O
+\end{bmatrix}
+\begin{bmatrix}
+u\\
+\lambda_0\\ \hline
+\lambda_1
+\end{bmatrix}
+=
+\begin{bmatrix}
+f\\
+c_0\\ \hline
+c_1
+\end{bmatrix}.
+\label{eq:htfetiProblemModif1}
+\end{equation}
+This equation can be rewritten further as
+\begin{equation}
+\begin{bmatrix}[c|c]
+\tilde{K} & \tilde{B}^T\\ \hline
+\tilde{B} & O
+\end{bmatrix}
+\begin{bmatrix}
+\tilde{u}\\
+\tilde{\lambda}
+\end{bmatrix}
+=
+\begin{bmatrix}
+\tilde{f}\\
+\tilde{c}
+\end{bmatrix},
+\label{eq:htfetiProblemModif2}
+\end{equation}
+The Schur complement can be derived from Eq. 
+\eqref{eq:htfetiProblemModif2} using steps like in 
+Eq. \eqref{eq:tfetiGlobProb}, \eqref{eq:elimUVar}, 
+\eqref{eq:tfetiOrthogCond} and 
+\eqref{eq:tfetiDualProblem}, so we get the new 
+problem
+\begin{equation}
+\left[
+\begin{array}{lr}
+\tilde{F} & \tilde{G} \\
+\tilde{G}^T & O
+\end{array}
+\right]
+\begin{bmatrix}
+\tilde{\lambda}\\
+\tilde{\alpha}
+\end{bmatrix}
+=
+\begin{bmatrix}
+\tilde{d}\\
+\tilde{e}
+\end{bmatrix},
+\label{eq:htfetiDualProblem}
+\end{equation}
+which is easily solvable than the original problem, because the coarse problem $\tilde{G}^T\tilde{G} \in \mathbb{R}^{n_G \times n_G}$ is significantly smaller. Its size depends on the number of clusters and not sub-domains like
+\begin{equation}
+n_{\tilde{G}} = \left(\# \, clusters\right) \times \left(\# \, RBM \right).
+\end{equation}
+This new problem can be also solved by PPCG algorithm in the same way as \eqref{eq:tfetiDualProblem}.

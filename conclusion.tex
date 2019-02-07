@@ -1,0 +1,24 @@
+\section{Conclusion}
+Our approach significantly simplifies the optimal usage of the FETI solvers in ESPRESO library 
+and can provided significant savings in orders of magnitude for both runtime as well as energy consumption for inexperienced users. 
+The final model as implemented requires only following input parameters provided by user: 
+
+\begin{itemize}
+\item total problem size,
+\item selected FETI method, 
+\item selected preconditioner, 
+\item estimated number of CG iterations (used to estimate the significance of the preprocessing routines).
+\end{itemize}
+
+while it returns the estimated solver run-time with the corresponding optimal 
+decomposition, parallelization settings of the solver.
+
+The number of CG iteration can not be predicted by our model so we left it as the user input.  
+User can simply perform a single test-runs,  which will give them the approximate information 
+about the number of iterations. 
+
+The estimated run-time was predicted with deviation lesser than 1\,s, given the 
+measured minimal time, as can be seen in the Tab. \ref{tab:finalModelTest}. 
+This is an acceptable precision, as with the least suitable settings the
+run-time can be more than 20 times (i.e. more than 50\,s in this case) slower  
+as the the optimal one.

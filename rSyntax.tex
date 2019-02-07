@@ -1,0 +1,123 @@
+\section{Basic Description of the R-syntax}
+\label{sec:r}
+The modeling itself was performed in R language (see \cite{rDocs}), which is
+a specialized programming language for statistical computations. Because the R-syntax is
+capable of containing the information about polynomials and term interaction in a 
+relatively compact format this syntax is used to describe the models in this thesis.
+
+
+The input variables such as the number of nodes, number of MPI processes (i.e. number of clusters) per 
+node, number of domains per cluster and number of DOF per node were denoted as 
+\texttt{nnodes}, \texttt{nprocs}, \texttt{ndoms} and \texttt{nDOF}, respectively.
+
+
+\paragraph*{Fitting a model} was accomplished with the function \texttt{glm()}\footnote{\url{https://stat.ethz.ch/R-manual/R-devel/library/stats/html/glm.html}}.
+% , which performs the Fisher scoring algorithm  to fit the generalized linear model. The example can be seen in Lst. \ref{lst:glmExample}.
+
+
+% \begin{lstlisting}[language=R,
+% 				   caption=Fitting the function using generalized linear regression in R,
+%                    label=lst:glmExample,
+%                    linewidth=8cm]
+% fit1 <- glm(formula=time ~ (poly(I(1/nprocs), 2) 
+%                             + poly(ndoms, 2) 
+%                             + poly(nDOF, 2))^3,
+%             data=dataFact,
+%             family=gaussian(link="log"))
+% \end{lstlisting}
+
+
+\paragraph*{\textit{Formula}} is described by a special syntax whose brief overview follows. Several examples can be seen in  Tab. \ref{tab:rFormulaSyntax}.
+
+\begin{itemize}
+	\item[]$\sim$ denotes "a dependency". If used in GLM, then it describes the response dependent on
+	a predictor - i.e. we can substitute it with $=$ in a mathematical notation.
+	\item[]$\left(x + y\right)\string^\,n$ describes main effects and all interaction up to the 
+	n-th order of the listed variables.
+	\item[]$I\left( \cdots \right)$ describes the environment with numeric operations, e.g. $I\left( x\string^2 \right) = x^2$, $I\left( log\left(x\right) \right) = \ln x$ etc.
+	\item[]$poly\left(x, n\right)$ describes an orthogonal polynomial of the variable $x$ up to the n-th
+	order.
+	\item[]$poly\left(x, n, raw=T\right)$ describes an ordinary polynomial of the variable $x$ up to the 
+	n-th order.
+\end{itemize}
+
+
+An orthogonal polynomial is internally computed as a model matrix of an ordinary polynomial and then its
+columns are adjusted to be orthogonal to all the previous ones. The first advantage of the orthogonality 
+is, that coefficients remain the same while adding new ones, i.e. $\beta_0$ and $\beta_1$ in the 
+polynomial $\beta_0 + \beta_1x$ will not change their values after adding $\beta_2x^2$ etc.
+
+
+% We can show it on a simple example, given by the Lst. \ref{lst:polyExampleM}.
+
+
+% \begin{lstlisting}[language=R,
+% 				   caption=The effect of adding a new term into the orthogonal polynomial in R,
+%                    label=lst:polyExampleM]
+% m <- lm(dist ~ poly(speed, 1), data = cars, x=T)
+% m1 <- lm(dist ~ poly(speed, 2), data = cars, x=T)
+% \end{lstlisting}
+
+
+% The coefficients of the model $m$, obtained by a \texttt{summary()} function look like this:
+
+% \begin{figure}[H]
+% \centering
+% \begin{minipage}{0.45\textwidth}
+% \centering
+% \begin{BVerbatim}
+%                Estimate
+% (Intercept)      42.980     
+% poly(speed, 1)  145.552     
+% \end{BVerbatim}
+% \end{minipage}
+% \begin{minipage}{0.45\textwidth}
+% \centering
+% \begin{BVerbatim}
+%                 Estimate
+% (Intercept)       42.980
+% poly(speed, 2)1  145.552
+% poly(speed, 2)2   22.996
+% \end{BVerbatim}
+% \end{minipage}
+% \end{figure}
+
+
+% And we can see, that after adding another term into the polynomial of the $speed$ variable (see model 
+% $m1$ in listing \ref{lst:polyExampleM}), the first two coefficients did not change at all.
+
+
+The second advantage of the orthogonal polynomials is, that while the previous terms keep their 
+coefficients, the new terms add only new "effects" to the model. So if the new term is not significantly
+contributing to the model, it can be easily detected with Wald test with $H_0: \beta_i = 0$, $\beta_i$ being the i-th coefficient of a linear predictor in a generalized linear regression.
+
+\begin{table}[hbt]
+\centering
+\begin{tabular}{lr}
+\hline
+\textbf{R formula} & \textbf{Meaning} \\ 
+\hline
+\texttt{y $\sim$ x + z} & $y = \beta_0 + \beta_1x  + \beta_2z$ \\
+\texttt{x + z + x:z} & $\beta_0 + \beta_1x + \beta_2z + \beta_3 x z$ \\
+\texttt{(x + y + z)\string^3} & $\beta_0 + \beta_1x + \beta_2y + \beta_3z + \beta_4 x y + 
+\beta_5 x z + \beta_6 y z + \beta_7 x yz$ \\
+\texttt{poly(x, 2, raw=T)} & $\beta_0 + \beta_1x + \beta_2 x^2$ \\
+\texttt{I(1/x)} & $\frac{1}{x}$ \\
+\hline
+\end{tabular}
+\caption{Examples of R formula syntax}
+\label{tab:rFormulaSyntax}
+\end{table}
+
+
+When using ordinary polynomials, coefficients of the previous terms change with every new term added 
+to the polynomial. Therefore the contribution of every single new term can not be detected so easily. This 
+could result in all the terms in the ordinary polynomial being detected as non-significant by Wald test, 
+despite the fact, that only its last term does not contribute to the model.
+
+
+The main advantage of the ordinary polynomials over the orthogonal ones is their easy interpretation,
+as can be seen in the Tab. \ref{tab:rFormulaSyntax}. So, the orthogonal polynomials were mostly 
+used in this thesis during the process of creating models and when the model was well-fitting and simple 
+enough, they were replaced with ordinary ones, to make formulas easy to understand and easy to write 
+down, if needed. 

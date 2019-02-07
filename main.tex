@@ -1,0 +1,195 @@
+% This is based on the LLNCS.DEM the demonstration file of
+% the LaTeX macro package from Springer-Verlag
+% for Lecture Notes in Computer Science,
+% version 2.4 for LaTeX2e as of 16. April 2010
+%
+% See http://www.springer.com/computer/lncs/lncs+authors?SGWID=0-40209-0-0-0
+% for the full guidelines.
+%
+
+\RequirePackage{amsmath}
+
+\documentclass[runningheads,a4paper]{llncs}
+
+\usepackage{amssymb}
+\setcounter{tocdepth}{3}
+\usepackage{graphicx}
+
+%\usepackage{amsmath} % neprepisuji LLNCS symbol
+\usepackage{amsfonts}
+\usepackage[
+backend=biber, 
+style=numeric]{biblatex}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[caption=false]{subfig}
+\usepackage{tikz}
+\usepackage{url}
+\usepackage{underscore}
+\usepackage{pgffor}
+\usepackage{pgfplots}
+\usepackage{pgfplotstable}
+\usepackage{newunicodechar}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{arrayjobx}
+\usepackage{tikz}
+\usepackage{textcomp}
+\usepackage{xifthen}
+\usepackage{mleftright}
+\usepackage{enumitem}
+\usepackage{fancyvrb}
+\usepackage{float}
+\usepackage{alltt}
+\usepackage{hhline}
+\usepackage{environ}
+\usepackage{adjustbox}
+\usepackage{mathtools}
+\usepackage[short]{optidef}
+\usepackage{longtable}
+\usepackage{lscape}
+\usepackage{makecell}
+\usepackage{colortbl}
+\usepackage{listings}
+\usepackage{wrapfig}
+\usepackage{hyperref}
+\usepackage{booktabs}
+
+\usepackage{url}
+\urldef{\mailsa}\path|{martin.beseda, lubomir.riha, alexandros.markopoulos, petr.strakos}@vsb.cz|
+
+\pgfplotsset{compat=1.14}
+
+\DeclareFieldFormat{labelnumberwidth}{#1\adddot}
+\setlength{\biblabelsep}{5pt}
+
+\DeclareCaptionLabelFormat{andtable}{#1~#2  \&  \tablename~\thetable}
+
+\addbibresource{bibliography.bib}
+\addbibresource{statistics.bib}
+\addbibresource{feti.bib}
+\addbibresource{mpi.bib}
+\addbibresource{directSolvers.bib}
+\addbibresource{pardiso.bib}
+\addbibresource{readex.bib}
+\addbibresource{others.bib}
+\newcommand*{\alert}{\textcolor{red}}
+
+\makeatletter
+% mynobreakpar
+\newcommand\mynobreakpar{\par\nobreak\@afterheading} 
+%
+\renewcommand*\env@matrix[1][*\c@MaxMatrixCols c]{%
+  \hskip -\arraycolsep
+  \let\@ifnextchar\new@ifnextchar
+  \array{#1}}
+\makeatother
+
+\allowdisplaybreaks
+
+\lstset{
+    literate={~} {$\sim$}{1}
+}
+
+\begin{document}
+
+\title{Performance Modeling of the HTFETI Solver Implementation in the ESPRESO Library}
+%
+\titlerunning{Performance Modeling the HTFETI Solver}  % abbreviated title (for running head)
+%                                     also used for the TOC unless
+%                                     \toctitle is used
+%
+\author{Martin Beseda\inst{a} \and Lubom\'{i}r \v{R}\'{i}ha\inst{a} \and Alexandros Markopoulos\inst{a} \and Petr Strako\v{s}\inst{a}}
+%
+\authorrunning{Performance Modeling the HTFETI Solver} % abbreviated author list (for running head)
+%
+%%%% list of authors for the TOC (use if author list has to be modified)
+%\tocauthor{Ivar Ekeland, Roger Temam, Jeffrey Dean, David Grove,
+%Craig Chambers, Kim B. Bruce, and Elisa Bertino}
+%
+\institute{$^a$IT4Innovations National Supercomputing Centre, VSB-Technical University of Ostrava, Ostrava, Czech Republic\\
+%\email{martin.beseda@vsb.cz, lubomir.riha@vsb.cz, alexandros.markopoulos@vsb.cz}
+\mailsa\\
+\texttt{http://www.it4i.cz}
+}
+%\\ WWW home page:
+%\texttt{http://users/\homedir iekeland/web/welcome.html}
+%\and
+%Universit\'{e} de Paris-Sud,
+%Laboratoire d'Analyse Num\'{e}rique, B\^{a}timent 425,\\
+%F-91405 Orsay Cedex, France}
+
+\maketitle              % typeset the title of the contribution
+
+\begin{abstract}
+
+The main objective of this paper is the development and implementation of the 
+performance model for prediction of the runtime of the 
+Total FETI and Hybrid Total FETI methods implemented in the ESPRESO library.
+
+The final performance model consists of several partial ones, each created by 
+a generalized linear regression, using R-language. These models were created from 
+set of calibration measurements.
+
+The final performance model is designed for prediction of the optimal settings 
+of the solvers in a sense of optimal domain decomposition and optimal number of 
+MPI processes and OpenMP threads. The user only provides the size of the problem 
+to be solved.
+
+Our tests show that the final model can predict optimal settings with an error 
+smaller than 1s for a solver runtime that can vary between 3 and 50 seconds 
+based on problem decomposition and parallelization setup.  
+
+\keywords{performance model, ESPRESO, FETI, MPI, OpenMP}
+\end{abstract}
+%
+
+\section{Motivation}
+The motivation for the work presented in this paper is a fact that there exist several 
+implementations of various FETI methods but it is very difficult for their users to 
+setup them efficiently to minimize the runtime of the solver and to efficiently utilize the 
+given hardware. 
+
+Therefore this paper proposes a performance model for a massively parallel implementation of 
+the Total FETI (TFETI) and Hybrid Total FETI (HTFETI) solvers in the 
+ESPRESO library \cite{vriha2016massively}.
+
+
+This model allows any inexperienced user to set-up both solvers in sense of 
+(1) optimal domain decomposition and 
+(2) optimal OpenMP and MPI parallelization, 
+to minimize the solver runtime. 
+Our model takes into account the parallel scalability of the solver however 
+it is not able to predict the numerical scalability. In other words, model determines the minimal single iteration time, but it cannot predict how many iterations is needed 
+to solve the problem because it is highly problem dependent.  
+
+
+The model is composed of several partial models. Each of these estimates the run-time of a separate region. This enables easier customization of the model for future 
+versions of ESPRESO as well as more detailed information of the solver behavior for 
+different settings. 
+
+
+
+\input{feti.tex}
+%\input{numa.tex}
+
+\section{Performance Modeling of the FETI Solvers }
+\input{problemDesc.tex}
+\input{modelling.tex}
+
+\input{results.tex}
+\input{conclusion.tex}
+
+{\renewcommand{\markboth}[2]{}%
+\printbibliography[heading=bibintoc]}
+%\bibliographystyle{splncs03}
+%\bibliography{References}
+
+\appendix
+\input{rSyntax.tex}
+\input{partialModels.tex}
+
+
+
+
+\end{document}

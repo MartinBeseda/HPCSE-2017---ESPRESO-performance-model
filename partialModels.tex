@@ -1,0 +1,81 @@
+\section{List of Partial Models}
+\label{sec:partialModels}
+
+\begin{align}
+&\begin{aligned}
+t_{K|act|T} \sim\; &\mathrm{poly(I(1/nprocs), 3, raw=T) + poly(ndoms, 3, raw=T)}\\
+&+ \mathrm{poly(nDOF, 3, raw=T)}\\
+&+ \mathrm{I(1/nprocs):poly(nDOF, 2, raw=T)}
+\end{aligned}\\[10pt]
+&\begin{aligned}
+t_{Dir|act} \sim\; &\mathrm{poly(I(1/nprocs), 3, raw=T) + poly(nDOF, 3, raw=T)}\\
+&+ \mathrm{poly(ndoms, 3, raw=T)}
+\end{aligned}\\[10pt]
+&\begin{aligned}
+t_{Lump_|act} \sim\; &\mathrm{poly(I(1/nprocs), 3, raw=T)}\\
+&+ \mathrm{poly(ndoms, 3, raw=T) + poly(nDOF, 3, raw=T)}\\
+&+ \mathrm{I(1/nprocs):nDOF}
+\end{aligned}\\[10pt]
+&\begin{aligned}
+t_{Dir|asm} \sim\; &\mathrm{poly(I(1/nprocs), 2, raw=T) + poly(nDOF, 4, raw=T)}\\
+&+ \mathrm{poly(ndoms, 3, raw=T)}
+\end{aligned}\\[10pt]
+&\begin{aligned}
+t_{K|asm} \sim\; &\mathrm{poly(I(1/nprocs), 2 ,raw=T) + poly(nDOF, 3, raw=T)}\\
+&+ \mathrm{poly(ndoms, 3, raw=T)}\\
+&+ \mathrm{I(1/nprocs):poly(ndoms, 2, raw=T)}
+\end{aligned}\\[10pt]
+&\begin{aligned}
+t_{F|asm}  \sim\; &\mathrm{poly(I(1/nprocs), 3, raw=T)}\\
+&+ \mathrm{poly(ndoms, 3, raw=T)}\\
+&+ \mathrm{poly(nDOF, 3, raw=T)}
+\end{aligned}\\[10pt]
+&\begin{aligned}
+t_{K|fact} \sim\; &\mathrm{poly(I(1/nprocs), 2) + poly(nDOF, 3)}\\
+&+ \mathrm{poly(ndoms, 3) + I(1/nprocs):poly(nDOF, 3)}
+\end{aligned}\\[10pt]
+&\begin{aligned}
+t_{GG^T|asm|HT} \sim\; &\mathrm{poly(I(1/nprocs), 3, raw=T)}\\
+&+ \mathrm{poly(nnodes, 3, raw=T) + poly(nDOF, 3, raw=T)}\\
+&+ \mathrm{poly(ndoms, 3, raw=T)}\\
+&+ \mathrm{poly(I(1/nprocs), 2, raw=T):ndoms + ndoms:nDOF}\\
+&+ \mathrm{I(1/nprocs\,\widehat{}\,2):nnodes}
+\end{aligned}\\[10pt]
+&\begin{aligned}
+t_{GG^T|asm|T} \sim\; &\mathrm{poly(nnodes, 3, raw=T) + poly(ndoms, 2, raw=T)}\\
+&+ \mathrm{poly(nDOF, 3, raw=T)}\\
+&+ \mathrm{poly(I(1/nprocs), 3, raw=T)}\\
+&+ \mathrm{poly(nnodes, 3, raw=T):poly(nDOF, 3, raw=T)}\\
+&+ \mathrm{poly(nDOF, 3, raw=T):poly(I(1/nprocs), 3, raw=T)}\\
+&+ \mathrm{poly(nnodes, 3, raw=T):poly(I(1/nprocs), 3, raw=T)}
+\end{aligned}\\[10pt]
+&\begin{aligned}
+t_{GG^T\: 1|asm|T} \sim\; &\mathrm{nnodes + poly(I(log(2*nnodes)), 3, raw=T)}\\
+&+ \mathrm{poly(ndoms, 2, raw=T)}\\
+&+ \mathrm{poly(nDOF, 3, raw=T)}\\
+&+ \mathrm{I(log(2*nnodes)\,\widehat{}\,3):poly(nDOF, 2, raw=T)}
+\end{aligned}\\[10pt]
+&\begin{aligned}
+t_{GG^T\: 2|asm|T} \sim\; &\mathrm{poly(nnodes, 3, raw=T) + poly(ndoms, 2, raw=T)}\\
+&+ \mathrm{poly(nDOF, 3, raw=T)}\\
+&+ \mathrm{poly(nnodes, 2, raw=T):poly(nDOF, 2, raw=T)}
+\end{aligned}\\[10pt]
+&\begin{aligned}
+t_{GG^T|act|HT} \sim\; &\mathrm{poly(nDOF, 3, raw=T)+ I(ndoms\,\widehat{}\,2)}\\
+&+ \mathrm{(poly(I(1/nprocs), 2, raw=T)}\\
+&+ \mathrm{poly(nnodes, 2, raw=T))\,\widehat{}\,2}\\
+&+ \mathrm{I(1/nprocs):nDOF}\\
+&+ \mathrm{(poly(nnodes, 2, raw=T) + ndoms)\,\widehat{}\,2}\\
+&+ \mathrm{nnodes:nDOF + nDOF:ndoms}
+\end{aligned}\\[10pt]
+&\begin{aligned}
+t_{GG^T|act|T} \sim\; &\mathrm{poly(nnodes, 3, raw=T) + poly(I(1/nprocs), 3, raw=T)}\\
+&+ \mathrm{poly(ndoms, 3, raw=T) + poly(nDOF, 2, raw=T)}\\
+&+ \mathrm{poly(nnodes, 3, raw=T):nDOF + nnodes:ndoms}
+\end{aligned}\\[10pt]
+&\begin{aligned}
+t_{S_\alpha|asm} \sim\; &\mathrm{nDOF + poly(I(1/nprocs), 3, raw=T)}\\
+&+ \mathrm{poly(ndoms, 2, raw=T)}\\
+&+ \mathrm{poly(nDOF, 3, raw=T):poly(I(1/nprocs), 3, raw=T)}
+\end{aligned}
+\end{align}
